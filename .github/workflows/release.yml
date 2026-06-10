@@ -47,7 +47,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           body_path: RELEASE_NOTES.md
-          files: dist/*
+          # Only ship build artifacts. A bare `dist/*` also catches the `.gitignore`
+          # that `uv build` drops in dist/, which GitHub then uploads as a stray asset.
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
 
       # Trusted publishing (OIDC) — no stored token. Opt-in: set the repository
       # variable PYPI_PUBLISH=true once a PyPI trusted publisher is configured for
