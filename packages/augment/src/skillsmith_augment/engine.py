@@ -89,14 +89,18 @@ def augment_block(
 def _validate_in_sandbox(sb: Sandbox, doc: SkillDoc, script: GeneratedScript) -> SandboxResult:
     """Write the script to a temp dir and exercise its stdin->stdout contract."""
 
+    import sys
     import tempfile
 
     with tempfile.TemporaryDirectory(prefix="skillsmith-augment-") as tmp:
         tmpdir = Path(tmp)
         script_path = tmpdir / Path(script.filename).name
         script_path.write_text(script.source, encoding="utf-8")
-        # Exercise the contract with a trivial probe input.
-        argv = ["python", str(script_path)]
+        # Exercise the contract with a trivial probe input. Use the *running*
+        # interpreter (sys.executable) rather than a bare "python": macOS (and many
+        # minimal Linux images) ship only "python3", so "python" isn't on PATH.
+        interpreter = sys.executable or "python3"
+        argv = [interpreter, str(script_path)]
         result = sb.run(argv, cwd=tmpdir, env={"PYTHONIOENCODING": "utf-8"})
         return result
 

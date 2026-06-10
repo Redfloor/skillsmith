@@ -49,8 +49,11 @@ jobs:
           body_path: RELEASE_NOTES.md
           files: dist/*
 
-      # Trusted publishing (OIDC) — no stored token. Remove `--check-url` style flags
-      # as needed for your index. Guarded so forks/dispatch runs don't publish.
+      # Trusted publishing (OIDC) — no stored token. Opt-in: set the repository
+      # variable PYPI_PUBLISH=true once a PyPI trusted publisher is configured for
+      # this repo. Until then the GitHub Release is still created above; this step
+      # is skipped so tagging exercises the pipeline green instead of failing on a
+      # missing publisher. (Settings → Secrets and variables → Actions → Variables.)
       - name: Publish to PyPI
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') && vars.PYPI_PUBLISH == 'true'
         run: uv publish
