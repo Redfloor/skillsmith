@@ -1,0 +1,47 @@
+name: MCP drift-check
+
+# Scheduled + on-demand MCP contract diffing. Re-snapshots each target's tool
+# contract and diffs against the committed *.mcpc.json artifacts. On drift it opens
+# a proposal PR per the autonomy policy (human-in-the-loop by default).
+on:
+  schedule:
+    - cron: "17 6 * * *" # daily, 06:17 UTC
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Glob/dir of MCP configs or *.mcpc.json snapshots to check"
+        default: "tests/fixtures/mcp"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --frozen --all-packages
+
+      - name: Diff MCP contracts
+        id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TARGET="${{ github.event.inputs.target || 'tests/fixtures/mcp' }}"
+          # Exit code is nonzero on a BREAKING diff; --json feeds the audit trail.
+          uv run skillsmith heal "$TARGET" --json | tee drift.json
+        continue-on-error: true
+
+      - name: Upload drift report
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-drift
+          path: drift.json
+
+      # The heal engine writes proposals to .skillsmith/ and (when configured) opens a
+      # branch+PR via the gh CLI. No silent commits: breaking drift always requires a
+      # human to approve the PR before merge.

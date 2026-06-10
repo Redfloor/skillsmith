@@ -1,0 +1,167 @@
+{
+  "$defs": {
+    "DeterminismReport": {
+      "additionalProperties": false,
+      "description": "Empirical output-variance over N runs \u2014 the heart of 'temp 0 is not enough'.",
+      "properties": {
+        "distinct_outputs": {
+          "title": "Distinct Outputs",
+          "type": "integer"
+        },
+        "fingerprints": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Fingerprints",
+          "type": "array"
+        },
+        "normalized_variance": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Normalized Variance",
+          "type": "number"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        },
+        "runs": {
+          "title": "Runs",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "runs",
+        "normalized_variance",
+        "distinct_outputs"
+      ],
+      "title": "DeterminismReport",
+      "type": "object"
+    },
+    "TriggeringReport": {
+      "additionalProperties": false,
+      "description": "Should-trigger / should-not-trigger accuracy with a train/held-out split.",
+      "properties": {
+        "false_trigger_rate": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "False Trigger Rate",
+          "type": "number"
+        },
+        "holdout_trigger_rate": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Holdout Trigger Rate",
+          "type": "number"
+        },
+        "per_query": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Per Query",
+          "type": "object"
+        },
+        "runs_per_query": {
+          "title": "Runs Per Query",
+          "type": "integer"
+        },
+        "split_seed": {
+          "title": "Split Seed",
+          "type": "integer"
+        },
+        "train_trigger_rate": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Train Trigger Rate",
+          "type": "number"
+        }
+      },
+      "required": [
+        "runs_per_query",
+        "split_seed",
+        "train_trigger_rate",
+        "holdout_trigger_rate",
+        "false_trigger_rate"
+      ],
+      "title": "TriggeringReport",
+      "type": "object"
+    }
+  },
+  "$id": "https://skillsmith.dev/schemas/eval_report.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "determinism": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DeterminismReport"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+    },
+    "golden_failed": {
+      "default": 0,
+      "title": "Golden Failed",
+      "type": "integer"
+    },
+    "golden_passed": {
+      "default": 0,
+      "title": "Golden Passed",
+      "type": "integer"
+    },
+    "passed": {
+      "default": true,
+      "title": "Passed",
+      "type": "boolean"
+    },
+    "regressions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Regressions",
+      "type": "array"
+    },
+    "schema_version": {
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "skill_path": {
+      "format": "path",
+      "title": "Skill Path",
+      "type": "string"
+    },
+    "triggering": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TriggeringReport"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "skill_path"
+  ],
+  "title": "EvalReport",
+  "type": "object"
+}

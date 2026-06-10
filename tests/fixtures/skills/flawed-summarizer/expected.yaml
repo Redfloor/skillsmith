@@ -1,0 +1,16 @@
+# Seeded issues this fixture MUST surface (used by the meta-eval).
+must_find_rules:
+  - metadata.name_format            # "Flawed_Summarizer" is not kebab-case
+  - description.too_vague           # "helps with various tasks"
+  - description.missing_when_to_use # no "use when" clause
+  - imperative.unjustified          # "You MUST return JSON." (no rationale)
+  - antipattern.conflicting_instructions  # always/never summarize
+  - antipattern.missing_error_handling
+  - claude.format_contract.unenforced_json # promises JSON, nothing validates it
+
+# Work-block classification expectations.
+deterministic_candidate_min: 2     # word-count + email-extract blocks
+judgment_required_min: 1           # the "summarize in your own words / tone" block
+# Only warnings/info here (bad name format, vague desc, etc.) -> no ERROR -> passes
+# the hard gate while still flagging plenty. The missing-metadata fixture is the FAIL.
+must_pass: true

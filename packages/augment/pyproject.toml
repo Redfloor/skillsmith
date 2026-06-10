@@ -1,0 +1,21 @@
+[project]
+name = "skillsmith-augment"
+version = "0.1.0"
+description = "skillsmith augment: convert deterministic-candidate work-blocks into tested scripts."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "skillsmith-core",
+    "skillsmith-adapters",
+    "skillsmith-audit",
+    "skillsmith-eval",
+    "pydantic>=2.7",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/skillsmith_augment"]

@@ -1,0 +1,21 @@
+# Normalize line endings so the repo behaves identically on Linux/macOS/Windows.
+# Text files are stored with LF in the repo; checkout converts per-platform.
+* text=auto eol=lf
+
+# POSIX shell + Python must stay LF even when checked out on Windows, or they break.
+*.sh   text eol=lf
+*.py   text eol=lf
+justfile text eol=lf
+
+# Windows-only scripts use CRLF.
+*.ps1  text eol=crlf
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+
+# Lockfile + schemas are text; keep them stable and diffable.
+uv.lock text eol=lf
+*.json  text eol=lf
+
+# Treat wheels/archives as binary (defensive; normally gitignored).
+*.whl  binary
+*.tar.gz binary

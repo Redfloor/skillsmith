@@ -1,0 +1,7 @@
+must_find_rules:
+  - metadata.name_required
+  - metadata.description_required
+  - references.missing_file        # reference/does-not-exist.md is absent
+deterministic_candidate_min: 1     # "Convert the CSV to JSON and sort" block
+judgment_required_min: 0
+must_pass: false                   # name/description/reference errors -> hard FAIL

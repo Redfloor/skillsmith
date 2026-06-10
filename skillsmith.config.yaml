@@ -1,0 +1,95 @@
+# =============================================================================
+# skillsmith — TEAM POLICY (committed to VCS).
+#
+# This is the CEILING on autonomy. The gitignored skillsmith.local.yaml may make
+# things MORE restrictive (or record a developer's "remember my choice"), but it
+# can NEVER exceed the autonomy granted here.
+#
+# Autonomy tiers (per action class):
+#   auto              -> skillsmith may apply the change without asking.
+#   auto-if-tests-pass-> apply automatically ONLY if all golden tests pass AND
+#                        the change is additive / non-breaking (low-risk tier).
+#   propose           -> open a PR with a diff + audit-trail entry; human approves.
+#   off               -> never perform this action class.
+#
+# Rationale: OWASP LLM06:2025 "Excessive Agency" — require human approval for
+# high-impact actions and avoid open-ended capabilities. Self-heal default is
+# detect -> diagnose -> propose-as-diff/PR -> human-approve. No silent commits.
+# =============================================================================
+version: 1
+
+autonomy:
+  audit: auto                       # read-only analysis, safe to run unattended
+  augment: propose                  # generating + wiring scripts touches the skill
+  heal_additive: auto-if-tests-pass # additive/non-breaking MCP repairs, low-risk tier
+  heal_breaking: propose            # removed/renamed/required-added/type-changed
+  heal_warning: propose             # description changes (descriptions are model instructions)
+
+approval_gates:
+  # Action classes that ALWAYS require an explicit human approval, regardless of
+  # the autonomy tier above. These cannot be downgraded by local config.
+  require_human:
+    - heal_breaking
+    - augment
+  # Never allow open-ended capabilities (OWASP Excessive Agency).
+  forbid:
+    - raw_shell_execution
+    - network_egress_from_sandbox
+
+targets:
+  # Globs of skills skillsmith is allowed to touch. Anything outside is refused.
+  allowed_paths:
+    - "skills/**/SKILL.md"
+    - "packages/*/skills/**/SKILL.md"
+    - "tests/fixtures/skills/**/SKILL.md"
+  # Paths that are read-only even if matched above (e.g. vendored third-party).
+  read_only_paths:
+    - "**/vendor/**"
+
+sandbox:
+  # Layered isolation. skillsmith picks the strongest available backend at runtime
+  # and records which one it used in the audit trail.
+  profile: strict                   # strict | standard | dev
+  backend_preference:               # tried in order; first available wins
+    - firecracker                   # microVM (microsandbox / e2b) — strongest
+    - gvisor                        # runsc — strong, Linux
+    - bubblewrap                    # bwrap + seccomp — fallback
+    - nsjail
+  deny_network: true                # ALL generated + third-party skill code is untrusted
+  read_only_fs: true
+  limits:
+    cpu_seconds: 30
+    memory_mb: 512
+    wall_seconds: 60
+    max_processes: 64
+  # Docker alone is NOT treated as a security boundary; only used as an outer
+  # convenience wrapper, never as the sole isolation layer.
+
+eval:
+  # Regression policy: block on REGRESSION vs a recorded baseline, not on an
+  # absolute threshold (which would be brittle as skills legitimately evolve).
+  regression: block-on-regression
+  determinism:
+    runs: 8                         # N runs for the variance harness
+    max_normalized_variance: 0.15   # advisory; reported, not a hard gate by default
+  triggering:
+    runs: 5
+    train_holdout_split: 0.7        # avoid overfitting description tweaks
+  llm_judge:
+    enabled: true
+    # LLM-as-judge is NEVER the sole gate; deterministic scorers are ground truth.
+    sole_gate: false
+
+git:
+  # Self-heal / augment output is ALWAYS delivered via branch + PR.
+  branch_prefix: "skillsmith/"
+  open_pr: true
+  pr_labels: ["skillsmith", "automated-proposal"]
+  commit_trailer: "Co-Authored-By: skillsmith <noreply@skillsmith.dev>"
+
+audit:
+  # The lint field set + limits are data-driven so they can track Anthropic's
+  # evolving SKILL.md spec without code changes. See packages/audit for the
+  # default ruleset; override individual rule severities here.
+  ruleset: default
+  rule_overrides: {}                # e.g. {body_max_lines: warning}

@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "server_id": "weather",
+  "captured_at": "2026-01-01T00:00:00Z",
+  "tools": [
+    {
+      "name": "get_forecast",
+      "description": "Return the weather forecast for a location.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "location": { "type": "string" },
+          "days": { "type": "integer" }
+        },
+        "required": ["location"]
+      }
+    },
+    {
+      "name": "list_stations",
+      "description": "List known weather stations.",
+      "input_schema": { "type": "object", "properties": {} }
+    }
+  ],
+  "behavior_fingerprint": "baseline-fp-aaaa"
+}

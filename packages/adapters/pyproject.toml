@@ -1,0 +1,24 @@
+[project]
+name = "skillsmith-adapters"
+version = "0.1.0"
+description = "skillsmith adapters: the Adapter protocol and per-ecosystem implementations."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "skillsmith-core",
+    "pydantic>=2.7",
+    "pyyaml>=6.0",
+]
+
+[project.entry-points."skillsmith.adapters"]
+claude-skill = "skillsmith_adapters.claude_skill:ClaudeSkillAdapter"
+claude-agent-sdk = "skillsmith_adapters.claude_agent_sdk:ClaudeAgentSdkAdapter"
+mcp = "skillsmith_adapters.mcp:McpAdapter"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/skillsmith_adapters"]

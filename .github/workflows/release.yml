@@ -1,0 +1,56 @@
+name: Release
+
+# Intentional release notes (Changesets-style): the human curates CHANGELOG.md under
+# "Unreleased", and a tag push rolls it into a versioned section and publishes.
+# SemVer is enforced by the tag shape (vMAJOR.MINOR.PATCH).
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write # for trusted publishing to PyPI (OIDC)
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - run: uv sync --frozen --all-packages
+
+      # Quality gate before any artifact is built.
+      - name: Verify
+        run: |
+          uv run ruff check .
+          uv run mypy packages
+          uv run pytest
+
+      - name: Build all workspace packages
+        run: uv build --all-packages
+
+      - name: Extract release notes from CHANGELOG
+        id: notes
+        run: |
+          # Pull the top-most version section as the GitHub Release body.
+          awk '/^## \[/{c++} c==1{print} c==2{exit}' CHANGELOG.md > RELEASE_NOTES.md
+          cat RELEASE_NOTES.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: RELEASE_NOTES.md
+          files: dist/*
+
+      # Trusted publishing (OIDC) — no stored token. Remove `--check-url` style flags
+      # as needed for your index. Guarded so forks/dispatch runs don't publish.
+      - name: Publish to PyPI
+        if: startsWith(github.ref, 'refs/tags/')
+        run: uv publish

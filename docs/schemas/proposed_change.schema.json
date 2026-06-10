@@ -1,0 +1,57 @@
+{
+  "$id": "https://skillsmith.dev/schemas/proposed_change.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A repair/optimization proposed as a reviewable diff. NEVER auto-committed\nunless the autonomy policy + tests explicitly permit the low-risk tier.",
+  "properties": {
+    "action_class": {
+      "title": "Action Class",
+      "type": "string"
+    },
+    "low_risk": {
+      "default": false,
+      "title": "Low Risk",
+      "type": "boolean"
+    },
+    "rationale": {
+      "title": "Rationale",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "token_delta": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Token Delta"
+    },
+    "touched_paths": {
+      "items": {
+        "format": "path",
+        "type": "string"
+      },
+      "title": "Touched Paths",
+      "type": "array"
+    },
+    "unified_diff": {
+      "title": "Unified Diff",
+      "type": "string"
+    }
+  },
+  "required": [
+    "action_class",
+    "title",
+    "rationale",
+    "unified_diff"
+  ],
+  "title": "ProposedChange",
+  "type": "object"
+}

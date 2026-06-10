@@ -1,0 +1,24 @@
+site_name: skillsmith
+site_description: Audit, optimize, test, and self-heal agentic skills and prompt-based tools.
+repo_url: https://github.com/redfloor/skillsmith
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - content.code.copy
+    - toc.integrate
+  palette:
+    - scheme: default
+      primary: indigo
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - Extending (Adapters): extending.md
+  - Self-healing: self-healing.md
+  - Future extensions: future-extensions.md
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - toc:
+      permalink: true

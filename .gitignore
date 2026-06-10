@@ -1,0 +1,37 @@
+# Per-developer config — MUST be gitignored (see skillsmith.config.yaml for team policy)
+skillsmith.local.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# uv
+# NOTE: uv.lock is intentionally committed (see pyproject.toml / docs).
+
+# Tooling caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+.deepeval/
+.promptfoo/
+site/
+
+# skillsmith runtime artifacts
+.skillsmith/
+*.audit.json
+*.varreport.json
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

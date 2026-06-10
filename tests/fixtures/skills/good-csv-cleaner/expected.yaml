@@ -1,0 +1,12 @@
+# A clean skill: no ERROR findings, good metadata, progressive disclosure, scripts.
+must_find_rules: []
+forbid_rules:                       # these must NOT fire on a well-formed skill
+  - metadata.name_required
+  - metadata.description_required
+  - description.too_vague
+  - description.missing_when_to_use
+  - references.missing_file
+  - antipattern.conflicting_instructions
+deterministic_candidate_min: 2      # parse/dedupe + schema-validate blocks
+judgment_required_min: 1            # "explain which rows were dropped" needs judgment
+must_pass: true

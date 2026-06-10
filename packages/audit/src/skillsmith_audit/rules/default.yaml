@@ -1,0 +1,120 @@
+# =============================================================================
+# skillsmith default audit ruleset (DATA-DRIVEN).
+#
+# Anthropic's SKILL.md spec evolves, so thresholds/severities live here, not in
+# code. Override per-rule severity from skillsmith.config.yaml: audit.rule_overrides.
+# Set a rule's `enabled: false` to skip it. `severity` ∈ {info, warning, error}.
+# =============================================================================
+version: 1
+spec_revision: "2026-05"   # which Anthropic guidance revision these defaults track
+
+limits:
+  body_max_lines: 500            # keep SKILL.md bodies focused; heavy content -> refs
+  description_min_chars: 40
+  description_max_chars: 1024
+  name_max_chars: 64
+  name_pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"   # kebab-case
+
+rules:
+  # --- required metadata --------------------------------------------------- #
+  metadata.name_required:
+    category: metadata
+    severity: error
+    message: "Frontmatter is missing required `name`."
+  metadata.description_required:
+    category: metadata
+    severity: error
+    message: "Frontmatter is missing required `description`."
+  metadata.name_format:
+    category: metadata
+    severity: warning
+    message: "`name` should be kebab-case and concise."
+
+  # --- description quality (what + when-to-use, third person) --------------- #
+  description.too_short:
+    category: description_quality
+    severity: warning
+    message: "Description is too short to convey what the skill does AND when to use it."
+  description.too_long:
+    category: description_quality
+    severity: info
+    message: "Description is very long; tighten it to a crisp what + when-to-use."
+  description.missing_when_to_use:
+    category: description_quality
+    severity: warning
+    message: "Description states WHAT but not WHEN to use it - hurts triggering accuracy."
+    when_to_use_cues: ["use when", "use this when", "when the user", "for ", "triggers"]
+  description.not_third_person:
+    category: description_quality
+    severity: info
+    message: "Description should be written in the third person (describe the skill, not 'you')."
+    first_person_markers: ["i ", "i'll", "we ", "you should", "let me"]
+  description.too_vague:
+    category: description_quality
+    severity: warning
+    message: "Description is vague/broad (e.g. 'helps with tasks'); be specific about scope."
+    vague_markers: ["helps with", "various tasks", "anything", "general purpose", "stuff"]
+
+  # --- body length / progressive disclosure -------------------------------- #
+  body.too_long:
+    category: body_length
+    severity: warning
+    message: "Body exceeds the recommended length; move detail into reference files."
+  progressive_disclosure.no_references:
+    category: progressive_disclosure
+    severity: info
+    message: "Long body with no reference files — consider progressive disclosure."
+
+  # --- reference + script integrity ---------------------------------------- #
+  references.missing_file:
+    category: reference_integrity
+    severity: error
+    message: "A referenced file does not exist on disk."
+  scripts.not_executable:
+    category: script_executable
+    severity: warning
+    message: "A referenced script is not marked executable."
+
+  # --- unjustified imperatives --------------------------------------------- #
+  imperative.unjustified:
+    category: unjustified_imperative
+    severity: info
+    message: "All-caps MUST/ALWAYS/NEVER without a stated rationale; add the 'why'."
+    tokens: ["MUST", "ALWAYS", "NEVER", "DO NOT", "REQUIRED"]
+    rationale_cues: ["because", "so that", "otherwise", "to avoid", "since"]
+
+  # --- prompt anti-patterns ------------------------------------------------ #
+  antipattern.conflicting_instructions:
+    category: prompt_antipattern
+    severity: warning
+    message: "Potentially conflicting instructions detected (e.g. 'always X' and 'never X')."
+  antipattern.missing_error_handling:
+    category: prompt_antipattern
+    severity: info
+    message: "Body invokes scripts/commands but never describes error handling."
+    invoke_cues: ["run ", "execute", "call ", "python", "bash", "curl"]
+    error_cues: ["if it fails", "on error", "error handling", "exit code", "retry", "fallback"]
+
+# --- deterministic-candidate classifier signals ----------------------------- #
+# A work-block scores points toward 'deterministic-candidate'. judgment markers
+# subtract. score >= threshold => deterministic-candidate.
+classifier:
+  threshold: 2
+  deterministic_signals:
+    parse: 2          # "parse", "extract field", "regex"
+    format_convert: 2 # "convert", "reformat", "to json", "csv"
+    compute: 2        # "count", "sum", "sort", "deduplicate", "validate schema"
+    deterministic_io: 1
+  judgment_signals:
+    subjective: -3    # "decide", "judge", "tone", "creative", "best", "appropriate"
+    summarize: -2     # "summarize", "explain", "interpret"
+    converse: -2      # "ask the user", "discuss", "depending on context"
+  deterministic_keywords:
+    parse: ["parse", "extract", "regex", "field", "tokenize", "split on"]
+    format_convert: ["convert", "reformat", "serialize", "to json", "to csv", "to yaml", "transform into"]
+    compute: ["count", "sum", "sort", "deduplicate", "dedupe", "validate", "checksum", "hash", "compute", "calculate"]
+    deterministic_io: ["read file", "write file", "list files", "glob", "fetch url"]
+  judgment_keywords:
+    subjective: ["decide", "judge", "tone", "creative", "best", "appropriate", "tasteful", "prefer"]
+    summarize: ["summarize", "explain", "interpret", "describe in your own words", "rephrase"]
+    converse: ["ask the user", "discuss", "depending on context", "use judgment", "as needed"]

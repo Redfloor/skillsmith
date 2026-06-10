@@ -1,0 +1,14 @@
+# mise (https://mise.jdx.dev) — optional convenience for contributors who already
+# use mise. NOT required: uv self-manages the Python toolchain (see bootstrap.*).
+# Kept in sync with .python-version / pyproject `requires-python`.
+[tools]
+uv = "0.11.16"
+python = "3.12"
+
+[env]
+# Keep skillsmith's own venv hermetic.
+UV_PYTHON_PREFERENCE = "managed"
+
+[tasks.setup]
+description = "Bootstrap the dev environment"
+run = "uv run python -c \"import sys; print('python', sys.version)\" && uv sync"

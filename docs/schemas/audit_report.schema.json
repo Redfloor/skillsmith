@@ -1,0 +1,238 @@
+{
+  "$defs": {
+    "BlockClassification": {
+      "description": "The central judgement of the audit: can this work be made deterministic?",
+      "enum": [
+        "deterministic-candidate",
+        "judgment-required"
+      ],
+      "title": "BlockClassification",
+      "type": "string"
+    },
+    "Finding": {
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "$ref": "#/$defs/FindingCategory"
+        },
+        "evidence": {
+          "additionalProperties": true,
+          "title": "Evidence",
+          "type": "object"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Location"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "rule_id": {
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "suggestion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Suggestion"
+        }
+      },
+      "required": [
+        "rule_id",
+        "category",
+        "severity",
+        "message"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "FindingCategory": {
+      "enum": [
+        "metadata",
+        "description_quality",
+        "body_length",
+        "progressive_disclosure",
+        "reference_integrity",
+        "script_executable",
+        "unjustified_imperative",
+        "prompt_antipattern",
+        "format_contract",
+        "determinism"
+      ],
+      "title": "FindingCategory",
+      "type": "string"
+    },
+    "Location": {
+      "additionalProperties": false,
+      "properties": {
+        "end_line": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End Line"
+        },
+        "line": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Line"
+        },
+        "path": {
+          "format": "path",
+          "title": "Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "title": "Location",
+      "type": "object"
+    },
+    "Severity": {
+      "description": "Ordered so comparisons can gate CI (``info`` < ``warning`` < ``error``).",
+      "enum": [
+        "info",
+        "warning",
+        "error"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "WorkBlock": {
+      "additionalProperties": false,
+      "description": "A chunk of instruction in a skill body that performs a unit of work.",
+      "properties": {
+        "classification": {
+          "$ref": "#/$defs/BlockClassification"
+        },
+        "confidence": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "excerpt": {
+          "title": "Excerpt",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/$defs/Location"
+        },
+        "rationale": {
+          "description": "Why this block was classified the way it was (human-readable).",
+          "title": "Rationale",
+          "type": "string"
+        },
+        "signals": {
+          "description": "The detected signals that drove the classification.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Signals",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "excerpt",
+        "classification",
+        "rationale"
+      ],
+      "title": "WorkBlock",
+      "type": "object"
+    }
+  },
+  "$id": "https://skillsmith.dev/schemas/audit_report.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+    },
+    "passed": {
+      "default": true,
+      "title": "Passed",
+      "type": "boolean"
+    },
+    "schema_version": {
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "skill_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Skill Name"
+    },
+    "skill_path": {
+      "format": "path",
+      "title": "Skill Path",
+      "type": "string"
+    },
+    "work_blocks": {
+      "items": {
+        "$ref": "#/$defs/WorkBlock"
+      },
+      "title": "Work Blocks",
+      "type": "array"
+    }
+  },
+  "required": [
+    "skill_path"
+  ],
+  "title": "AuditReport",
+  "type": "object"
+}

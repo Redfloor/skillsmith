@@ -1,0 +1,27 @@
+# =============================================================================
+# skillsmith — PER-DEVELOPER config (copy to skillsmith.local.yaml; GITIGNORED).
+#
+# Personal preferences and remembered choices ONLY. This file can make autonomy
+# MORE restrictive than the committed skillsmith.config.yaml, but the loader
+# CLAMPS any value that would exceed the team ceiling (see core.config).
+# =============================================================================
+version: 1
+
+# Remembered answers to the "auto-fix vs propose-and-approve" prompt. skillsmith
+# writes these here the first time you answer; clamped to the team ceiling.
+remembered_choices: {}
+  # augment: propose
+  # heal_additive: propose
+
+# Personal overrides (only ever tighten).
+autonomy:
+  # heal_additive: propose
+
+# Local secrets/tokens for git + LLM providers. Prefer environment variables.
+tokens:
+  # github: ${GITHUB_TOKEN}
+  # anthropic: ${ANTHROPIC_API_KEY}
+
+sandbox:
+  # Developers on machines without gVisor/Firecracker can force the fallback.
+  # profile: dev
