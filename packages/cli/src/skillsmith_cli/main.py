@@ -10,8 +10,10 @@ skillsmith adapters                list registered ecosystem adapters
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
+import sys
 from pathlib import Path
 
 import typer
@@ -19,6 +21,16 @@ from rich.console import Console
 
 from skillsmith_cli.runner import expand_targets, run_audits, run_evals
 from skillsmith_core.models import AggregateReport, AuditReport, EvalReport
+
+# Audited skills may contain non-ASCII content (e.g. "→"). On a legacy Windows console
+# (cp1252) printing that raised UnicodeEncodeError. Make our streams encoding-safe so
+# output degrades to "?" instead of crashing. Guarded: test/captured streams may lack
+# reconfigure().
+for _stream in (sys.stdout, sys.stderr):
+    _reconfigure = getattr(_stream, "reconfigure", None)
+    if _reconfigure is not None:
+        with contextlib.suppress(ValueError, OSError):  # pragma: no cover - platform dependent
+            _reconfigure(encoding="utf-8", errors="replace")
 
 app = typer.Typer(
     name="skillsmith",
