@@ -13,7 +13,11 @@ from pathlib import Path
 from typing import Any
 
 from skillsmith_audit.ruleset import Rule, Ruleset
-from skillsmith_core.models import Finding, FindingCategory, Location, SkillDoc
+from skillsmith_core.models import Finding, FindingCategory, Location, Severity, SkillDoc
+
+# Markers that identify a repo root, so references written relative to the repo
+# (e.g. `data/sources.json`, `docs/legal/…`) resolve instead of false-erroring.
+_REPO_MARKERS = (".git", "pyproject.toml", "package.json", "pnpm-workspace.yaml", "go.mod")
 
 
 def run_all(doc: SkillDoc, rs: Ruleset) -> list[Finding]:
@@ -31,13 +35,14 @@ def _emit(
     line: int | None = None,
     suggestion: str | None = None,
     evidence: dict[str, Any] | None = None,
+    severity: Severity | None = None,
 ) -> Iterable[Finding]:
     if rule is None or not rule.enabled:
         return
     yield Finding(
         rule_id=rule.id,
         category=FindingCategory(rule.category),
-        severity=rule.severity,
+        severity=severity or rule.severity,
         message=message or rule.message,
         location=Location(path=doc.path, line=line),
         suggestion=suggestion,
@@ -132,13 +137,35 @@ def _lint_body(doc: SkillDoc, rs: Ruleset) -> Iterable[Finding]:
 # Reference + script integrity
 # --------------------------------------------------------------------------- #
 def _lint_references(doc: SkillDoc, rs: Ruleset) -> Iterable[Finding]:
+    skill_dir = doc.path.parent
+    repo_root = _repo_root(skill_dir)
     for ref in doc.referenced_paths:
-        if not ref.exists():
+        # References are parsed as ``skill_dir / rel``; recover ``rel`` so we can also
+        # try to resolve it against the repo root. A SKILL.md commonly points at
+        # repo-relative paths (``data/sources.json``, ``docs/…``), not files beside it.
+        try:
+            rel = ref.relative_to(skill_dir)
+        except ValueError:  # pragma: no cover - defensive
+            rel = Path(ref.name)
+        if _resolves(rel, skill_dir, repo_root):
+            continue
+        # A bare filename (no directory part) is usually a *concept* or a runtime/remote
+        # artifact — e.g. "fetch `robots.txt`", "write to `sources.json`" — not a file the
+        # skill ships. Flag it softly instead of a hard error.
+        if len(rel.parts) == 1:
             yield from _emit(
                 rs.rule("references.missing_file"),
                 doc,
-                message=f"Referenced file is missing: {ref}",
-                evidence={"path": str(ref)},
+                message=f"Referenced name not found locally (may be runtime/remote): {rel}",
+                evidence={"path": str(rel), "bare": True},
+                severity=Severity.WARNING,
+            )
+        else:
+            yield from _emit(
+                rs.rule("references.missing_file"),
+                doc,
+                message=f"Referenced file is missing (checked skill dir and repo root): {rel}",
+                evidence={"path": str(rel), "repo_root": str(repo_root)},
             )
     for script in doc.script_paths:
         if script.exists() and not _is_executable(script):
@@ -149,6 +176,21 @@ def _lint_references(doc: SkillDoc, rs: Ruleset) -> Iterable[Finding]:
                 evidence={"path": str(script)},
                 suggestion=f"chmod +x {script}",
             )
+
+
+def _resolves(rel: Path, skill_dir: Path, repo_root: Path) -> bool:
+    """A reference exists if it's found relative to the skill dir OR the repo root."""
+
+    return (skill_dir / rel).exists() or (repo_root / rel).exists()
+
+
+def _repo_root(start: Path) -> Path:
+    """Nearest ancestor (incl. ``start``) that looks like a repo root; else ``start``."""
+
+    for parent in [start, *start.parents]:
+        if any((parent / marker).exists() for marker in _REPO_MARKERS):
+            return parent
+    return start
 
 
 def _is_executable(path: Path) -> bool:
